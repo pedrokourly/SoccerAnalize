@@ -4,19 +4,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aula 03</title>
+    <title>⚽ SoccerAnalyze - Monitor de Jogadores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4ECDC4',
+                        secondary: '#FFD700',
+                        accent: '#FF6B6B'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        canvas {
-            background-color: #f0f0f0;
-            display: block;
-            margin: 0 auto;
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .timer-glow {
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(78, 205, 196, 0.3);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+        }
+        
+        .field-gradient {
+            background: linear-gradient(45deg, #0F5132, #198754);
         }
     </style>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 
-<body>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+<body class="gradient-bg text-white min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-500 to-red-500 p-6 text-center shadow-2xl">
+        <h1 class="text-5xl font-bold mb-3 drop-shadow-lg">⚽ SoccerAnalyze</h1>
+        <p class="text-xl opacity-90 mb-4">🏟️ Monitor de Jogadores em Tempo Real</p>
+        <div class="glass rounded-full p-4 mx-auto w-fit border-2 border-white/30">
+            <div id="gameTimer" class="text-4xl font-bold text-secondary timer-glow tracking-wider">00:00</div>
+            <div class="text-sm opacity-80 mt-1">TEMPO DE JOGO</div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-6 max-w-7xl">
+        <!-- Top Section - Field and Charts -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+            <!-- Game Field -->
+            <div class="xl:col-span-2">
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-primary mb-4 text-center flex items-center justify-center gap-2">
+                        🏟️ Campo ao Vivo
+                    </h3>
+                    <div class="flex justify-center">
+                        <canvas id="gameCanvas" width="800" height="520" 
+                                class="field-gradient border-4 border-white rounded-xl shadow-2xl max-w-full h-auto">
+                        </canvas>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="glass rounded-2xl p-6 mt-6">
+                    <h3 class="text-xl font-bold text-primary mb-4 text-center">🎮 Controles</h3>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass rounded-xl p-4 text-center hover:bg-white/20 transition-all">
+                            <div class="text-2xl mb-2">⌨️</div>
+                            <strong class="block mb-1">Tecla S</strong>
+                            <span class="text-sm opacity-80">Mostrar/Ocultar Stats</span>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center hover:bg-white/20 transition-all">
+                            <div class="text-2xl mb-2 text-red-400">🔴</div>
+                            <strong class="block mb-1">Alerta</strong>
+                            <span class="text-sm opacity-80">BPM Elevado</span>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center hover:bg-white/20 transition-all">
+                            <div class="text-2xl mb-2 text-primary">📊</div>
+                            <strong class="block mb-1">Estatísticas</strong>
+                            <span class="text-sm opacity-80">Detalhadas</span>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center hover:bg-white/20 transition-all">
+                            <div class="text-2xl mb-2 text-secondary">🔥</div>
+                            <strong class="block mb-1">Heatmap</strong>
+                            <span class="text-sm opacity-80">Global</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="space-y-6">
+                <!-- Performance Chart -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-secondary mb-4 text-center">📈 Performance Geral</h3>
+                    <div class="h-64">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Heart Rate Chart -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-red-400 mb-4 text-center">❤️ Batimentos Cardíacos</h3>
+                    <div class="h-64">
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section - Heatmap and Stats -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Heatmap -->
+            <div class="glass rounded-2xl p-6">
+                <h3 class="text-2xl font-bold text-secondary mb-4 text-center">🔥 Mapa de Calor</h3>
+                <div class="flex justify-center mb-4">
+                    <canvas id="heatmapCanvas" width="800" height="520" 
+                            class="border-2 border-white rounded-xl bg-green-800 max-w-full h-auto">
+                    </canvas>
+                </div>
+                <div class="flex justify-center">
+                    <div class="flex items-center gap-3 text-sm">
+                        <div class="w-20 h-4 rounded bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 border border-white/30"></div>
+                        <span>Baixa → Alta Densidade</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="xl:col-span-2">
+                <div id="statsContainer" class="glass rounded-2xl p-6 max-h-96 overflow-y-auto">
+                    <h3 class="text-2xl font-bold text-primary mb-6 text-center">📊 Estatísticas dos Jogadores</h3>
+                    <div class="text-center opacity-70">Aguardando dados...</div>
+                </div>
+
+                <!-- Legend -->
+                <div class="glass rounded-2xl p-6 mt-6">
+                    <h4 class="text-lg font-bold text-primary mb-4 text-center">📋 Legenda</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="glass rounded-lg p-3 border-l-4 border-primary">❤️ Batimento cardíaco (bpm)</div>
+                        <div class="glass rounded-lg p-3 border-l-4 border-secondary">🏃 Velocidade atual (km/h)</div>
+                        <div class="glass rounded-lg p-3 border-l-4 border-accent">💪 Nível de stamina (%)</div>
+                        <div class="glass rounded-lg p-3 border-l-4 border-green-400">📏 Distância percorrida (km)</div>
+                        <div class="glass rounded-lg p-3 border-l-4 border-orange-400">🌡️ Temperatura corporal (°C)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="client.js"></script>
 </body>
 

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ SoccerAnalyze - Monitor de Jogadores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4285F4 0%, #EA4335 100%);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .game-section {
+            flex: 1;
+        }
+
+        .sidebar {
+            flex: 1;
+        }
+
+        .field-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .field-container h3 {
+            color: #4ECDC4;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .heatmap-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .heatmap-section h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .heatmap-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .heatmap-container canvas {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            background: #2d5a3d;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .color-box {
+            width: 80px;
+            height: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        canvas {
+            background: linear-gradient(45deg, #0F5132, #198754);
+            border: 4px solid #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .controls h3 {
+            color: #4ECDC4;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .control-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-container h3 {
+            color: #4ECDC4;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
+        .team-stats {
+            margin-bottom: 25px;
+        }
+
+        .team-stats h4 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .player-stats {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4ECDC4;
+            transition: transform 0.2s;
+        }
+
+        .player-stats:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .player-number {
+            background: #4ECDC4;
+            color: #1a1a1a;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .player-name {
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .player-position {
+            font-size: 0.9em;
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .legend h4 {
+            color: #4ECDC4;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .legend ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .legend li {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #4ECDC4;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <h1>⚽ SoccerAnalyze</h1>
+        <p>🏟️ Monitor de Jogadores em Tempo Real</p>
+    </div>
+
+    <div class="main-container">
+        <div class="game-section">
+            <div class="field-container">
+                <h3>🏟️ Campo ao Vivo</h3>
+                <canvas id="gameCanvas" width="800" height="520"></canvas>
+            </div>
+            
+            <div class="controls">
+                <h3>🎮 Controles</h3>
+                <div class="control-grid">
+                    <div class="control-item">
+                        <strong>S</strong><br>Mostrar/Ocultar Informações dos Jogadores
+                    </div>
+                    <div class="control-item">
+                        <span style="color: red;">🔴</span><br>Batimento Elevado (>160 bpm)
+                    </div>
+                    <div class="control-item">
+                        <span style="color: #4ECDC4;">📊</span><br>Estatísticas Detalhadas
+                    </div>
+                    <div class="control-item">
+                        <span style="color: #FFD700;">🔥</span><br>Mapa de Calor Global
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="heatmap-section">
+                <h3>🔥 Mapa de Calor Global</h3>
+                <div class="heatmap-container">
+                    <canvas id="heatmapCanvas" width="800" height="520"></canvas>
+                </div>
+                <div class="heatmap-legend">
+                    <span class="legend-item">
+                        <span class="color-box" style="background: linear-gradient(to right, #00ff00, #ffff00, #ff0000);"></span>
+                        <span>Baixa → Alta Densidade</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div id="statsContainer" class="stats-container">
+                <h3>📊 Estatísticas dos Jogadores</h3>
+                <p style="text-align: center; opacity: 0.7;">Aguardando dados...</p>
+            </div>
+
+            <div class="legend">
+                <h4>📋 Legenda</h4>
+                <ul>
+                    <li>❤️ Batimento cardíaco (bpm)</li>
+                    <li>🏃 Velocidade atual (km/h)</li>
+                    <li>💪 Nível de stamina (%)</li>
+                    <li>📏 Distância percorrida (km)</li>
+                    <li>🌡️ Temperatura corporal (°C)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+
+</html>
