@@ -14,6 +14,10 @@ let gameStartTime = Date.now();
 let performanceChart = null;
 let heartRateChart = null;
 
+// Controle de atualização dos gráficos
+let chartUpdateCounter = 0;
+let lastStatsUpdate = 0;
+
 // Timer do jogo
 function updateGameTimer() {
     const elapsed = Date.now() - gameStartTime;
@@ -53,6 +57,7 @@ function initCharts() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false, // Desabilitar animações para melhor performance
             plugins: {
                 legend: {
                     labels: {
@@ -104,6 +109,10 @@ function initCharts() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 750, // Animação suave para novos pontos
+                easing: 'easeInOutQuad'
+            },
             plugins: {
                 legend: {
                     labels: {
@@ -114,7 +123,10 @@ function initCharts() {
             scales: {
                 x: {
                     ticks: {
-                        color: 'white'
+                        color: 'white',
+                        maxTicksLimit: 8, // Limitar número de labels no eixo X
+                        autoSkip: true,
+                        maxRotation: 45
                     },
                     grid: {
                         color: 'rgba(255, 255, 255, 0.1)'
@@ -139,6 +151,11 @@ function initCharts() {
 // Atualizar gráficos
 function updateCharts() {
     if (!performanceChart || !heartRateChart || !players) return;
+
+    // Atualizar gráficos apenas a cada 15 atualizações (aproximadamente 3 segundos)
+    chartUpdateCounter++;
+    if (chartUpdateCounter < 15) return;
+    chartUpdateCounter = 0;
 
     const homePlayers = Object.values(players).filter(p => p.team === 'home');
     const awayPlayers = Object.values(players).filter(p => p.team === 'away');
@@ -188,19 +205,25 @@ function updateCharts() {
     performanceChart.update('none');
 
     // Atualizar line chart de batimentos
-    const currentTime = new Date().toLocaleTimeString();
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
     
-    if (heartRateChart.data.labels.length > 20) {
+    // Manter histórico maior - até 50 pontos (aproximadamente 2.5 minutos)
+    if (heartRateChart.data.labels.length >= 50) {
         heartRateChart.data.labels.shift();
         heartRateChart.data.datasets[0].data.shift();
         heartRateChart.data.datasets[1].data.shift();
     }
 
     heartRateChart.data.labels.push(currentTime);
-    heartRateChart.data.datasets[0].data.push(homeAvg.heartRate);
-    heartRateChart.data.datasets[1].data.push(awayAvg.heartRate);
+    heartRateChart.data.datasets[0].data.push(Math.round(homeAvg.heartRate));
+    heartRateChart.data.datasets[1].data.push(Math.round(awayAvg.heartRate));
 
-    heartRateChart.update('none');
+    heartRateChart.update('active'); // Usar 'active' para atualizar com animação suave
 }
 
 // Inicializar quando a página carregar
@@ -222,7 +245,14 @@ socket.on('fieldConfig', (config) => {
 socket.on('gameUpdate', (data) => {
     players = data.players;
     render();
-    updateStatsDisplay();
+    
+    // Atualizar estatísticas apenas a cada 2 segundos para evitar problemas de hover
+    const now = Date.now();
+    if (now - lastStatsUpdate > 2000) {
+        updateStatsDisplay();
+        lastStatsUpdate = now;
+    }
+    
     updateCharts();
 });
 
@@ -408,7 +438,10 @@ function updateStatsDisplay() {
     const statsContainer = document.getElementById('statsContainer');
     if (!statsContainer || !players) return;
     
-    let html = '<h3 class="text-2xl font-bold text-primary mb-6 text-center">📊 Estatísticas dos Jogadores</h3>';
+    // Verificar se já existe conteúdo para evitar recriação desnecessária
+    const existingContent = statsContainer.querySelector('.stats-content');
+    let html = '<div class="stats-content">';
+    html += '<h3 class="text-2xl font-bold text-primary mb-6 text-center">📊 Estatísticas dos Jogadores</h3>';
     
     // Separar por times
     const homePlayers = Object.values(players).filter(p => p.team === 'home');
@@ -444,9 +477,9 @@ function updateStatsDisplay() {
                 const staminaColor = getPerformanceColor(player.stats.stamina, 'stamina');
                 
                 html += `
-                    <div class="glass rounded-xl p-5 mb-4 hover:bg-white/20 transition-all duration-300 stat-card">
+                    <div class="glass rounded-xl p-5 mb-4 transition-all duration-300 stat-card cursor-pointer hover:bg-white/20 hover:shadow-xl hover:scale-[1.02]">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-gradient-to-br from-primary to-green-400 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white/30">
+                            <div class="w-10 h-10 bg-gradient-to-br from-primary to-green-400 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white/30 shadow-lg">
                                 ${player.number}
                             </div>
                             <div class="flex-1">
@@ -457,29 +490,29 @@ function updateStatsDisplay() {
                             </div>
                         </div>
                         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                            <div class="glass rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                            <div class="glass rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 hover:bg-red-500/20 border border-transparent hover:border-red-400/50">
                                 <div class="text-lg mb-1">❤️</div>
-                                <div class="text-xl font-bold ${heartRateColor}">${player.stats.heartRate}</div>
+                                <div class="text-xl font-bold ${heartRateColor} transition-colors duration-200">${player.stats.heartRate}</div>
                                 <div class="text-xs opacity-70 uppercase tracking-wide">BPM</div>
                             </div>
-                            <div class="glass rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                            <div class="glass rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 hover:bg-blue-500/20 border border-transparent hover:border-blue-400/50">
                                 <div class="text-lg mb-1">🏃</div>
-                                <div class="text-xl font-bold ${speedColor}">${player.stats.speed.toFixed(1)}</div>
+                                <div class="text-xl font-bold ${speedColor} transition-colors duration-200">${player.stats.speed.toFixed(1)}</div>
                                 <div class="text-xs opacity-70 uppercase tracking-wide">KM/H</div>
                             </div>
-                            <div class="glass rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                            <div class="glass rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 hover:bg-green-500/20 border border-transparent hover:border-green-400/50">
                                 <div class="text-lg mb-1">💪</div>
-                                <div class="text-xl font-bold ${staminaColor}">${player.stats.stamina}</div>
+                                <div class="text-xl font-bold ${staminaColor} transition-colors duration-200">${player.stats.stamina}</div>
                                 <div class="text-xs opacity-70 uppercase tracking-wide">STAMINA</div>
                             </div>
-                            <div class="glass rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                            <div class="glass rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 hover:bg-purple-500/20 border border-transparent hover:border-purple-400/50">
                                 <div class="text-lg mb-1">📏</div>
-                                <div class="text-xl font-bold text-secondary">${(player.stats.distanceCovered/1000).toFixed(2)}</div>
+                                <div class="text-xl font-bold text-secondary transition-colors duration-200">${(player.stats.distanceCovered/1000).toFixed(2)}</div>
                                 <div class="text-xs opacity-70 uppercase tracking-wide">KM</div>
                             </div>
-                            <div class="glass rounded-lg p-3 text-center hover:scale-105 transition-transform">
+                            <div class="glass rounded-lg p-3 text-center transition-all duration-200 hover:scale-105 hover:bg-orange-500/20 border border-transparent hover:border-orange-400/50">
                                 <div class="text-lg mb-1">🌡️</div>
-                                <div class="text-xl font-bold text-secondary">${player.stats.temperature.toFixed(1)}</div>
+                                <div class="text-xl font-bold text-secondary transition-colors duration-200">${player.stats.temperature.toFixed(1)}</div>
                                 <div class="text-xs opacity-70 uppercase tracking-wide">°C</div>
                             </div>
                         </div>
@@ -494,7 +527,14 @@ function updateStatsDisplay() {
     renderTeam(homePlayers, '🏠 Time Casa', 'text-blue-400');
     renderTeam(awayPlayers, '✈️ Time Visitante', 'text-red-400');
     
-    statsContainer.innerHTML = html;
+    html += '</div>';
+    
+    // Apenas atualizar se o conteúdo mudou significativamente
+    const currentHash = btoa(JSON.stringify(players)).substring(0, 20);
+    if (statsContainer.dataset.lastHash !== currentHash) {
+        statsContainer.innerHTML = html;
+        statsContainer.dataset.lastHash = currentHash;
+    }
 }
 
 // Controles do coach

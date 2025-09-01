@@ -31,9 +31,19 @@
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
         }
         
+        .stat-card {
+            transform: translateZ(0); /* Força aceleração por hardware */
+            will-change: transform, box-shadow;
+        }
+        
         .stat-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
             box-shadow: 0 10px 25px rgba(78, 205, 196, 0.3);
+        }
+        
+        .stat-card .glass:hover {
+            transform: scale(1.05);
+            will-change: transform;
         }
         
         .gradient-bg {

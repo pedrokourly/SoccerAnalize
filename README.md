@@ -2,6 +2,18 @@
 
 **SoccerAnalyze** é uma aplicação web em tempo real para monitoramento e análise de jogadores de futebol durante partidas. O sistema oferece visualização ao vivo das posições dos jogadores, estatísticas detalhadas, mapas de calor e gráficos de performance.
 
+## 📸 Screenshots
+
+### 🏟️ Dashboard Principal
+Interface principal com campo ao vivo, controles e timer de jogo.
+
+![Dashboard Principal](./assets/screenshots/dashboard-principal.png)
+
+### 📊 Gráficos e Estatísticas
+Visualização dos gráficos de performance e estatísticas detalhadas dos jogadores.
+
+![Gráficos e Estatísticas](./assets/screenshots/graficos-estatisticas.png)
+
 ## 🎯 Funcionalidades
 
 ### 🏟️ **Monitoramento em Tempo Real**
@@ -76,13 +88,17 @@
 
 ```
 SoccerAnalize/
-├── server.js              # Servidor principal com lógica do jogo
-├── package.json           # Dependências e scripts
-├── public/
-│   ├── index.html        # Interface principal
-│   ├── client.js         # Lógica do cliente
-│   └── index_backup.html # Backup da interface
-└── README.md             # Este arquivo
+├── server.js                 # Servidor principal com lógica do jogo
+├── package.json             # Dependências e scripts
+├── assets/                  # Recursos do projeto
+│   └── screenshots/         # Capturas de tela da aplicação
+│       ├── dashboard-principal.png
+│       └── graficos-estatisticas.png
+├── public/                  # Arquivos públicos do cliente
+│   ├── index.html          # Interface principal
+│   ├── client.js           # Lógica do cliente
+│   └── index_backup.html   # Backup da interface
+└── README.md               # Este arquivo
 ```
 
 ## 🎮 Como Usar
