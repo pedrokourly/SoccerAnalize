@@ -1,5 +1,7 @@
 # ⚽ SoccerAnalyze
 
+> 🎓 **Projeto Acadêmico** - Trabalho desenvolvido para a disciplina de Tópicos Avançados de Computação
+
 **SoccerAnalyze** é uma aplicação web em tempo real para monitoramento e análise de jogadores de futebol durante partidas. O sistema oferece visualização ao vivo das posições dos jogadores, estatísticas detalhadas, mapas de calor e gráficos de performance.
 
 ## 📸 Screenshots
@@ -176,7 +178,24 @@ Este projeto está licenciado sob a licença ISC. Veja o arquivo [LICENSE](LICEN
 ## 👨‍💻 Autor
 
 **Pedro Kourly**
+- Estudante de **Ciência da Computação**
 - GitHub: [@pedrokourly](https://github.com/pedrokourly)
+
+### 🎓 Contexto Acadêmico
+
+Este projeto foi desenvolvido como trabalho para a disciplina de **Tópicos Avançados de Computação**, explorando:
+
+- **Comunicação em Tempo Real**: Implementação de WebSockets com Socket.IO
+- **Visualização de Dados**: Dashboards interativos e gráficos dinâmicos
+- **Arquitetura Cliente-Servidor**: Aplicação web escalável e responsiva
+- **Simulação de Dados**: Algoritmos para movimento e estatísticas realistas
+
+### 🎯 Objetivos de Aprendizagem
+
+- Dominar tecnologias modernas de desenvolvimento web
+- Implementar sistemas de comunicação em tempo real
+- Criar interfaces de usuário intuitivas e responsivas
+- Aplicar conceitos de análise e visualização de dados
 
 ## 🙏 Agradecimentos
 
